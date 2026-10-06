@@ -1,5 +1,6 @@
-/* 1. PRIMERO LAS IMPORTACIONES DE FUENTES (Regla de oro) */
+/* 1. PRIMERO LAS IMPORTACIONES DE FUENTES (deben ir antes que todo lo demás) */
 @import '@fontsource/montserrat/400.css';
+@import '@fontsource/montserrat/500.css';
 @import '@fontsource/montserrat/600.css';
 @import '@fontsource/montserrat/700.css';
 
@@ -8,11 +9,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 3. NUESTROS ESTILOS GLOBALES BASE */
+/* 3. ESTILOS GLOBALES BASE */
 body {
   background-color: #11051F;
   color: #FFFFFF;
   overflow-x: hidden;
 }
-
-/* Borramos todo lo demás (.counter, .hero, etc.) porque usamos Tailwind */

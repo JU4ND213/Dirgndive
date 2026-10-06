@@ -2,6 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu } from 'lucide-react';
 
+// --- VARIANTES REUTILIZABLES (fuera de los componentes para no recrearlas en cada render) ---
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+};
+
+const letterContainer = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.5 } }
+};
+
+const letterAnim = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
+
 // --- SUBCOMPONENTES DE LA PANTALLA DE CARGA (SPLASH) ---
 
 const ServiceIcon = ({ icon, label, delay }) => (
@@ -21,15 +38,6 @@ const ServiceIcon = ({ icon, label, delay }) => (
 );
 
 const SplashScreen = () => {
-  const letterContainer = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.5 } }
-  };
-  const letterAnim = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
-  };
-
   return (
     <motion.div 
       initial={{ opacity: 1 }}
@@ -84,18 +92,25 @@ const SplashScreen = () => {
 // --- COMPONENTE PRINCIPAL (HERO) ---
 
 function App() {
+  const [isReady, setIsReady] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
 
+  // 1. El truco anti-lag: le damos 150ms al navegador para que pinte
+  // los blur y drop-shadows antes de empezar a calcular animaciones.
   useEffect(() => {
-    // El Splash Screen dura 4.5 segundos antes de desaparecer
-    const timer = setTimeout(() => setShowSplash(false), 4500);
-    return () => clearTimeout(timer);
+    const readyTimer = setTimeout(() => setIsReady(true), 150);
+    return () => clearTimeout(readyTimer);
   }, []);
 
-  const fadeUp = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
-  };
+  // 2. El Splash Screen dura 4.5 segundos, contados desde que la página está lista
+  useEffect(() => {
+    if (!isReady) return;
+    const splashTimer = setTimeout(() => setShowSplash(false), 4500);
+    return () => clearTimeout(splashTimer);
+  }, [isReady]);
+
+  // Mientras respira esos 150ms, mostramos solo el fondo oscuro liso (cero lag)
+  if (!isReady) return <div className="min-h-screen bg-brand-bg"></div>;
 
   return (
     <>
