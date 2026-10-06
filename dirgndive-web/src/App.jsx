@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu } from 'lucide-react';
+import { Menu, Smartphone, Globe, Headset, Monitor } from 'lucide-react';
 
 // --- VARIANTES REUTILIZABLES (fuera de los componentes para no recrearlas en cada render) ---
 
@@ -19,19 +19,69 @@ const letterAnim = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
 };
 
+// --- RAYOS DE LUZ DE LAS ESQUINAS (SVG estático, sin blur = cero lag) ---
+
+const LightRays = ({ mirrored = false, colorClass, className = '' }) => {
+  // useId genera un id único por instancia (para que los degradados no se mezclen)
+  const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+
+  return (
+    <svg
+      viewBox="0 0 500 260"
+      fill="none"
+      preserveAspectRatio="xMinYMax meet"
+      className={`absolute bottom-0 ${mirrored ? 'right-0 -scale-x-100' : 'left-0'} w-[45%] max-w-[640px] h-auto pointer-events-none z-0 ${colorClass} ${className}`}
+    >
+      <defs>
+        {/* Degradado: brillante en la esquina, se desvanece hacia afuera */}
+        <linearGradient id={`${id}-beam`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="500" y2="0">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.95" />
+          <stop offset="55%" stopColor="currentColor" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {/* Haces de luz */}
+      <g stroke={`url(#${id}-beam)`} strokeLinecap="round">
+        <path d="M0 260 L500 105" strokeWidth="1.5" />
+        <path d="M0 260 L500 160" strokeWidth="1" />
+        <path d="M0 260 L500 215" strokeWidth="0.75" />
+        <path d="M0 255 L380 20" strokeWidth="1" />
+        <path d="M0 260 L250 0" strokeWidth="0.75" />
+      </g>
+
+      {/* Relámpagos en zigzag (laten suave) */}
+      <g
+        className="animate-pulse"
+        stroke={`url(#${id}-beam)`}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M40 260 L120 195 L100 190 L190 125 L170 120 L250 62" />
+        <path d="M150 260 L240 215 L222 209 L330 168 L312 162 L410 128" />
+      </g>
+
+      {/* Puntas brillantes */}
+      <circle cx="250" cy="62" r="2.5" fill="currentColor" />
+      <circle cx="410" cy="128" r="2.5" fill="currentColor" />
+    </svg>
+  );
+};
+
 // --- SUBCOMPONENTES DE LA PANTALLA DE CARGA (SPLASH) ---
 
-const ServiceIcon = ({ icon, label, delay }) => (
+const ServiceIcon = ({ icon, label, delay, colorClass }) => (
   <motion.div 
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.8, delay, ease: "easeOut" }}
-    className="flex flex-col items-center justify-center gap-4 px-8 border-r border-white/10 last:border-r-0"
+    className="flex flex-col items-center justify-start gap-4 px-6 sm:px-8 border-r border-white/10 last:border-r-0"
   >
-    <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-brand-blue">
+    <div className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center ${colorClass}`}>
       {icon}
     </div>
-    <span className="text-[0.6rem] sm:text-xs font-bold text-center uppercase tracking-widest text-brand-light w-24 sm:w-28 leading-tight">
+    <span className="text-[0.6rem] sm:text-xs font-bold text-center uppercase tracking-widest text-brand-light w-24 sm:w-32 leading-tight">
       {label}
     </span>
   </motion.div>
@@ -46,7 +96,11 @@ const SplashScreen = () => {
     >
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-dark/30 rounded-full blur-[120px] pointer-events-none -z-10" />
 
-      <div className="flex flex-col items-center mb-24 z-10">
+      {/* Rayos de luz en las esquinas inferiores */}
+      <LightRays colorClass="text-brand-primary" className="opacity-80" />
+      <LightRays mirrored colorClass="text-brand-blue" className="opacity-80" />
+
+      <div className="flex flex-col items-center mb-16 z-10">
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -55,14 +109,14 @@ const SplashScreen = () => {
         >
           <motion.img 
             src="/logo.png" alt="Dirgndive Logo" 
-            className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+            className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 object-contain drop-shadow-[0_0_30px_rgba(139,92,246,0.3)]"
             animate={{ y: [-5, 5, -5] }}
             transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
           />
         </motion.div>
 
         <motion.div 
-          className="flex text-4xl md:text-6xl font-bold tracking-[0.3em] mb-6 text-white ml-[0.3em]"
+          className="flex text-4xl md:text-6xl lg:text-7xl font-semibold tracking-[0.2em] mb-6 text-white ml-[0.2em]"
           variants={letterContainer} initial="hidden" animate="visible"
         >
           {"DIRGNDIV".split("").map((char, index) => (
@@ -73,17 +127,37 @@ const SplashScreen = () => {
 
         <motion.p 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 1.5 }}
-          className="text-[0.7rem] md:text-sm font-medium tracking-[0.2em] text-brand-light uppercase text-center"
+          className="text-[0.7rem] md:text-base font-medium tracking-[0.25em] text-brand-light uppercase text-center"
         >
           Tecnología que <span className="text-brand-primary font-bold">evoluciona</span> contigo.
         </motion.p>
       </div>
 
-      <div className="flex flex-wrap sm:flex-nowrap justify-center items-center mt-8 z-10 w-full max-w-4xl px-4">
-        <ServiceIcon delay={1.8} label="Apps Móviles" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>} />
-        <ServiceIcon delay={2.0} label="Páginas Web" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>} />
-        <ServiceIcon delay={2.2} label="Soporte Técnico" icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>} />
-        <ServiceIcon delay={2.4} label={<>Venta y<br/>Mantenimiento<br/>de Equipos</>} icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>} />
+      <div className="flex flex-wrap sm:flex-nowrap justify-center items-stretch mt-4 z-10 w-full max-w-4xl px-4">
+        <ServiceIcon
+          delay={1.8}
+          label="Apps Móviles"
+          colorClass="text-brand-primary"
+          icon={<Smartphone className="w-full h-full" strokeWidth={1.75} />}
+        />
+        <ServiceIcon
+          delay={2.0}
+          label="Páginas Web"
+          colorClass="text-brand-blue"
+          icon={<Globe className="w-full h-full" strokeWidth={1.75} />}
+        />
+        <ServiceIcon
+          delay={2.2}
+          label="Soporte Técnico"
+          colorClass="text-brand-primary"
+          icon={<Headset className="w-full h-full" strokeWidth={1.75} />}
+        />
+        <ServiceIcon
+          delay={2.4}
+          label={<>Venta y<br/>Mantenimiento<br/>de Equipos</>}
+          colorClass="text-brand-blue"
+          icon={<Monitor className="w-full h-full" strokeWidth={1.75} />}
+        />
       </div>
     </motion.div>
   );
@@ -127,7 +201,7 @@ function App() {
           transition={{ duration: 1, delay: 0.2 }}
           className="min-h-screen bg-brand-bg font-sans relative overflow-hidden"
         >
-          {/* Fondo de red neuronal / ondas sutiles */}
+          {/* Fondo de resplandores sutiles */}
           <div 
             className="absolute inset-0 z-0 opacity-40 pointer-events-none"
             style={{
@@ -137,6 +211,10 @@ function App() {
               `
             }}
           />
+
+          {/* Rayos de luz de fondo (esquinas inferiores) */}
+          <LightRays colorClass="text-brand-primary" className="opacity-50" />
+          <LightRays mirrored colorClass="text-brand-blue" className="opacity-50" />
 
           {/* NAVBAR */}
           <nav className="relative z-20 pt-8 pb-4">
@@ -167,16 +245,16 @@ function App() {
           </nav>
 
           {/* HERO SECTION */}
-          <main className="container mx-auto px-8 lg:px-16 pt-20 lg:pt-32 pb-24 flex flex-col lg:flex-row items-center justify-between relative z-10 min-h-[80vh]">
+          <main className="container mx-auto px-8 lg:px-16 pt-10 lg:pt-12 pb-24 flex flex-col lg:flex-row items-center justify-between relative z-10 lg:min-h-[80vh]">
             <motion.div 
-              className="lg:w-[55%] z-10"
+              className="lg:w-[50%] z-10"
               initial="hidden" animate="visible"
               variants={{
                 hidden: { opacity: 0 },
                 visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.5 } }
               }}
             >
-              <motion.h1 variants={fadeUp} className="text-5xl lg:text-[4.2rem] font-bold leading-[1.15] tracking-tight mb-10 text-white">
+              <motion.h1 variants={fadeUp} className="text-4xl sm:text-5xl lg:text-[3.6rem] font-semibold leading-[1.2] tracking-tight mb-10 text-white">
                 Soluciones <br /> tecnológicas que <br /> impulsan <span className="text-brand-primary">tu mundo.</span>
               </motion.h1>
               
@@ -191,13 +269,15 @@ function App() {
               initial={{ opacity: 0, scale: 0.9, x: 30 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
-              className="lg:w-[45%] mt-16 lg:mt-0 relative flex justify-end items-center"
+              className="lg:w-[50%] mt-16 lg:mt-0 relative flex justify-center lg:justify-end items-center"
             >
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-primary/20 blur-[120px] rounded-full -z-10" />
-              <img 
+              <motion.img 
                 src="/hero-devices.png" 
                 alt="Dispositivos Dirgndive" 
-                className="w-full max-w-[600px] object-contain relative z-10"
+                className="w-full max-w-[560px] lg:max-w-[720px] object-contain relative z-10"
+                animate={{ y: [-6, 6, -6] }}
+                transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = "https://placehold.co/800x600/11051F/8B5CF6?text=Imagen+hero-devices.png";
