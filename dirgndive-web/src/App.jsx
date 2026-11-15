@@ -19,8 +19,12 @@ import {
   Send,
   MapPin,
   Mail,
-  Phone
+  Phone,
+  MessageCircle
 } from 'lucide-react';
+
+const WEB3FORMS_ACCESS_KEY = '8e8cc661-6e77-47c6-94b6-d4c104c08152'; // Pega aquí tu Access Key de Web3Forms
+const WHATSAPP_NUMBER = '593995982046'; // Pon tu número con código de país (ej. 593987654321 sin el +)
 
 // --- VARIANTES REUTILIZABLES (fuera de los componentes para no recrearlas en cada render) ---
 
@@ -459,10 +463,13 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
+    contacto: '',
     servicio: 'Desarrollo de Apps Móviles',
     mensaje: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSent, setFormSent] = useState(false);
+  const [formError, setFormError] = useState('');
 
   // 1. Precarga REAL en GPU/Memoria: decodifica el logo y las fuentes ANTES de disparar el primer frame
   useEffect(() => {
@@ -512,11 +519,67 @@ function App() {
     return () => clearTimeout(splashTimer);
   }, [isReady]);
 
-  const handleFormSubmit = (e) => {
+  // 3. Envío de correo mediante Web3Forms
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    setFormSent(true);
-    setTimeout(() => setFormSent(false), 4000);
-    setFormData({ nombre: '', servicio: 'Desarrollo de Apps Móviles', mensaje: '' });
+    setIsSubmitting(true);
+    setFormError('');
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: `⚡ Nuevo requerimiento Dirgndive: ${formData.servicio}`,
+          from_name: formData.nombre,
+          Nombre_o_Empresa: formData.nombre,
+          Contacto_Cliente: formData.contacto || 'No especificado',
+          Servicio_Requerido: formData.servicio,
+          Mensaje_Detalle: formData.mensaje
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setFormSent(true);
+        setFormData({
+          nombre: '',
+          contacto: '',
+          servicio: 'Desarrollo de Apps Móviles',
+          mensaje: ''
+        });
+        setTimeout(() => setFormSent(false), 5000);
+      } else {
+        setFormError('Revisa que hayas colocado tu Access Key de Web3Forms o contáctanos por WhatsApp.');
+      }
+    } catch {
+      setFormError('No se pudo conectar con el servidor de correo. Intenta enviarlo por WhatsApp.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 4. Generador de enlaces de WhatsApp (con los datos del formulario o mensaje general)
+  const cleanWhatsAppNumber = WHATSAPP_NUMBER.replace(/[^0-9]/g, '');
+
+  const getDirectWhatsAppUrl = () => {
+    const text = 'Hola Dirgndive, me gustaría recibir información sobre sus servicios tecnológicos.';
+    return `https://wa.me/${cleanWhatsAppNumber}?text=${encodeURIComponent(text)}`;
+  };
+
+  const handleSendViaWhatsApp = () => {
+    const text = `Hola *Dirgndive*, les escribo desde su página web:\n\n*Nombre/Empresa:* ${
+      formData.nombre || 'Cliente Web'
+    }\n*Contacto:* ${formData.contacto || 'Por este medio'}\n*Servicio de interés:* ${
+      formData.servicio
+    }\n*Detalles:* ${formData.mensaje || 'Me gustaría recibir asesoría y cotización.'}`;
+
+    window.open(`https://wa.me/${cleanWhatsAppNumber}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   // Mientras decodifica la imagen en memoria (milisegundos), fondo oscuro puro sin tirones
@@ -626,8 +689,8 @@ function App() {
                       </div>
                     </div>
 
-                    <div className="pt-6 border-t border-white/10">
-                      <p className="text-xs text-brand-light/70 leading-relaxed mb-4">
+                    <div className="pt-6 border-t border-white/10 space-y-3">
+                      <p className="text-xs text-brand-light/70 leading-relaxed mb-2">
                         Tecnología que <span className="text-brand-primary font-semibold">evoluciona</span> contigo, sin perder tu identidad.
                       </p>
                       <a
@@ -636,6 +699,15 @@ function App() {
                         className="block w-full text-center py-3 rounded-full bg-brand-primary text-white text-xs font-bold uppercase tracking-widest hover:bg-brand-primary/90 transition-all"
                       >
                         Solicitar Atención
+                      </a>
+                      <a
+                        href={getDirectWhatsAppUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full text-center py-3 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all"
+                      >
+                        <MessageCircle size={16} /> WhatsApp Directo
                       </a>
                     </div>
                   </motion.aside>
@@ -991,6 +1063,24 @@ function App() {
                           <p className="text-sm font-medium text-white">Mantenimiento de PC, Laptops, Impresoras y Ventas</p>
                         </div>
                       </div>
+
+                      {/* Tarjeta de Enlace Directo a WhatsApp */}
+                      <a
+                        href={getDirectWhatsAppUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 p-3.5 -mx-3.5 rounded-2xl hover:bg-white/[0.04] border border-transparent hover:border-emerald-500/30 transition-all group"
+                      >
+                        <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                          <MessageCircle size={20} />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400">WhatsApp Oficial</h4>
+                          <p className="text-sm font-medium text-white flex items-center gap-1.5">
+                            Iniciar chat inmediato <ArrowRight size={14} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
+                          </p>
+                        </div>
+                      </a>
                     </div>
                   </motion.div>
 
@@ -1022,22 +1112,36 @@ function App() {
 
                         <div>
                           <label className="block text-xs font-semibold uppercase tracking-wider text-brand-light/80 mb-2">
-                            Servicio Requerido
+                            Tu Correo o Celular
                           </label>
-                          <select
-                            value={formData.servicio}
-                            onChange={(e) => setFormData({ ...formData, servicio: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl bg-brand-bg/90 border border-white/15 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
-                          >
-                            <option value="Desarrollo de Apps Móviles">Desarrollo de Apps Móviles</option>
-                            <option value="Páginas y Sistemas Web">Páginas y Sistemas Web</option>
-                            <option value="Soporte Técnico">Soporte Técnico</option>
-                            <option value="Mantenimiento de Computadoras / Laptops / Impresoras">
-                              Mantenimiento de PC / Laptops / Impresoras
-                            </option>
-                            <option value="Compra de Equipos y Accesorios">Compra de Equipos y Accesorios</option>
-                          </select>
+                          <input
+                            type="text"
+                            required
+                            value={formData.contacto}
+                            onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+                            placeholder="Ej. correo@empresa.com o 099..."
+                            className="w-full px-4 py-3 rounded-xl bg-brand-bg/90 border border-white/15 text-sm text-white placeholder:text-brand-light/40 focus:outline-none focus:border-brand-primary transition-colors"
+                          />
                         </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-brand-light/80 mb-2">
+                          Servicio Requerido
+                        </label>
+                        <select
+                          value={formData.servicio}
+                          onChange={(e) => setFormData({ ...formData, servicio: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl bg-brand-bg/90 border border-white/15 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                        >
+                          <option value="Desarrollo de Apps Móviles">Desarrollo de Apps Móviles</option>
+                          <option value="Páginas y Sistemas Web">Páginas y Sistemas Web</option>
+                          <option value="Soporte Técnico">Soporte Técnico</option>
+                          <option value="Mantenimiento de Computadoras / Laptops / Impresoras">
+                            Mantenimiento de PC / Laptops / Impresoras
+                          </option>
+                          <option value="Compra de Equipos y Accesorios">Compra de Equipos y Accesorios</option>
+                        </select>
                       </div>
 
                       <div>
@@ -1054,25 +1158,59 @@ function App() {
                         />
                       </div>
 
-                      <div className="flex items-center justify-between flex-wrap gap-4">
+                      <div className="flex flex-wrap items-center gap-4 pt-1">
+                        {/* Botón Enviar al Correo (Web3Forms) */}
                         <button
                           type="submit"
-                          className="px-8 py-3.5 rounded-full bg-brand-primary hover:bg-brand-primary/90 text-white text-sm font-semibold tracking-wide flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(139,92,246,0.35)] focus:outline-none"
+                          disabled={isSubmitting}
+                          className={`px-8 py-3.5 rounded-full text-white text-sm font-semibold tracking-wide flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(139,92,246,0.35)] focus:outline-none ${
+                            isSubmitting
+                              ? 'bg-brand-primary/50 cursor-not-allowed'
+                              : 'bg-brand-primary hover:bg-brand-primary/90'
+                          }`}
                         >
-                          Enviar Solicitud <Send size={16} />
+                          {isSubmitting ? 'Enviando...' : 'Enviar al Correo'}
+                          {!isSubmitting && <Send size={16} />}
                         </button>
 
-                        {formSent && (
-                          <span className="text-xs font-semibold text-brand-primary">
-                            ¡Solicitud lista! Nos pondremos en contacto contigo.
-                          </span>
-                        )}
+                        {/* Botón Enviar por WhatsApp con los datos del formulario */}
+                        <button
+                          type="button"
+                          onClick={handleSendViaWhatsApp}
+                          className="px-7 py-3.5 rounded-full border border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white text-sm font-semibold tracking-wide flex items-center gap-2 transition-all focus:outline-none"
+                        >
+                          Enviar por WhatsApp <MessageCircle size={17} />
+                        </button>
                       </div>
+
+                      {formSent && (
+                        <p className="text-xs font-semibold text-emerald-400 pt-1">
+                          ¡Solicitud enviada con éxito al correo de Dirgndive! Te responderemos pronto.
+                        </p>
+                      )}
+
+                      {formError && (
+                        <p className="text-xs font-semibold text-amber-400 pt-1">
+                          {formError}
+                        </p>
+                      )}
                     </form>
                   </motion.div>
                 </div>
               </div>
             </section>
+
+            {/* ================= BOTÓN FLOTANTE DE WHATSAPP ================= */}
+            <a
+              href={getDirectWhatsAppUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Chatear por WhatsApp con Dirgndive"
+              className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(16,185,129,0.45)] hover:scale-105 transition-all duration-300 focus:outline-none"
+            >
+              <MessageCircle size={20} strokeWidth={2.2} />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </a>
 
             {/* ================= FOOTER ================= */}
             <footer className="py-10 border-t border-white/10 bg-[#090211] text-center sm:text-left">
