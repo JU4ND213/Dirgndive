@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, Smartphone, Globe, Headset, Monitor } from 'lucide-react';
 
@@ -11,7 +11,7 @@ const fadeUp = {
 
 const letterContainer = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.5 } }
+  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.45 } }
 };
 
 const letterAnim = {
@@ -76,7 +76,7 @@ const ServiceIcon = ({ icon, label, delay, colorClass }) => (
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.8, delay, ease: "easeOut" }}
-    className="flex flex-col items-center justify-start gap-4 px-6 sm:px-8 border-r border-white/10 last:border-r-0"
+    className="flex flex-col items-center justify-start gap-4 px-6 sm:px-8 border-r border-white/10 last:border-r-0 will-change-transform"
   >
     <div className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center ${colorClass}`}>
       {icon}
@@ -91,10 +91,16 @@ const SplashScreen = () => {
   return (
     <motion.div 
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
-      className="fixed inset-0 bg-brand-bg flex flex-col items-center justify-center z-50 overflow-hidden"
+      exit={{ opacity: 0, transition: { duration: 0.7, ease: "easeInOut" } }}
+      className="fixed inset-0 bg-brand-bg flex flex-col items-center justify-center z-50 overflow-hidden will-change-[opacity]"
     >
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-dark/30 rounded-full blur-[120px] pointer-events-none -z-10" />
+      {/* Resplandor central con radial-gradient (0% lag de GPU en vez de blur-120px) */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] rounded-full pointer-events-none -z-10"
+        style={{
+          background: 'radial-gradient(circle, rgba(75, 29, 114, 0.35) 0%, rgba(36, 16, 47, 0.15) 45%, transparent 70%)'
+        }}
+      />
 
       {/* Rayos de luz en las esquinas inferiores */}
       <LightRays colorClass="text-brand-primary" className="opacity-80" />
@@ -102,31 +108,45 @@ const SplashScreen = () => {
 
       <div className="flex flex-col items-center mb-16 z-10">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: 30 }}
+          initial={{ opacity: 0, scale: 0.85, y: 25 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
-          className="mb-8"
+          transition={{ duration: 1.1, ease: [0.25, 0.1, 0.25, 1] }}
+          className="mb-8 will-change-transform"
         >
           <motion.img 
-            src="/logo.png" alt="Dirgndive Logo" 
-            className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 object-contain drop-shadow-[0_0_30px_rgba(139,92,246,0.3)]"
-            animate={{ y: [-5, 5, -5] }}
-            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+            src="/logo.png" 
+            alt="Dirgndive Logo" 
+            decoding="sync"
+            fetchPriority="high"
+            className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 object-contain drop-shadow-[0_0_25px_rgba(139,92,246,0.3)] will-change-transform"
+            animate={{ y: [0, -6, 0, 6, 0] }}
+            transition={{ repeat: Infinity, duration: 4, delay: 1.1, ease: "easeInOut" }}
           />
         </motion.div>
 
         <motion.div 
-          className="flex text-4xl md:text-6xl lg:text-7xl font-semibold tracking-[0.2em] mb-6 text-white ml-[0.2em]"
-          variants={letterContainer} initial="hidden" animate="visible"
+          className="flex text-4xl md:text-6xl lg:text-7xl font-semibold tracking-[0.2em] mb-6 text-white ml-[0.2em] will-change-transform"
+          variants={letterContainer} 
+          initial="hidden" 
+          animate="visible"
         >
           {"DIRGNDIV".split("").map((char, index) => (
-            <motion.span key={index} variants={letterAnim}>{char}</motion.span>
+            <motion.span key={index} variants={letterAnim} className="will-change-transform">
+              {char}
+            </motion.span>
           ))}
-          <motion.span variants={letterAnim} className="text-transparent bg-clip-text bg-gradient-to-b from-white to-brand-primary">E</motion.span>
+          <motion.span 
+            variants={letterAnim} 
+            className="text-transparent bg-clip-text bg-gradient-to-b from-white to-brand-primary will-change-transform"
+          >
+            E
+          </motion.span>
         </motion.div>
 
         <motion.p 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 1.5 }}
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ duration: 1, delay: 1.4 }}
           className="text-[0.7rem] md:text-base font-medium tracking-[0.25em] text-brand-light uppercase text-center"
         >
           Tecnología que <span className="text-brand-primary font-bold">evoluciona</span> contigo.
@@ -135,25 +155,25 @@ const SplashScreen = () => {
 
       <div className="flex flex-wrap sm:flex-nowrap justify-center items-stretch mt-4 z-10 w-full max-w-4xl px-4">
         <ServiceIcon
-          delay={1.8}
+          delay={1.7}
           label="Apps Móviles"
           colorClass="text-brand-primary"
           icon={<Smartphone className="w-full h-full" strokeWidth={1.75} />}
         />
         <ServiceIcon
-          delay={2.0}
+          delay={1.9}
           label="Páginas Web"
           colorClass="text-brand-blue"
           icon={<Globe className="w-full h-full" strokeWidth={1.75} />}
         />
         <ServiceIcon
-          delay={2.2}
+          delay={2.1}
           label="Soporte Técnico"
           colorClass="text-brand-primary"
           icon={<Headset className="w-full h-full" strokeWidth={1.75} />}
         />
         <ServiceIcon
-          delay={2.4}
+          delay={2.3}
           label={<>Venta y<br/>Mantenimiento<br/>de Equipos</>}
           colorClass="text-brand-blue"
           icon={<Monitor className="w-full h-full" strokeWidth={1.75} />}
@@ -169,125 +189,164 @@ function App() {
   const [isReady, setIsReady] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
 
-  // 1. El truco anti-lag: le damos 150ms al navegador para que pinte
-  // los blur y drop-shadows antes de empezar a calcular animaciones.
+  // 1. Precarga REAL en GPU/Memoria: decodifica el logo y las fuentes ANTES de disparar el primer frame
   useEffect(() => {
-    const readyTimer = setTimeout(() => setIsReady(true), 150);
-    return () => clearTimeout(readyTimer);
+    let isMounted = true;
+
+    const preloadAssets = async () => {
+      try {
+        const logoImg = new Image();
+        logoImg.src = '/logo.png';
+        if (logoImg.decode) {
+          await logoImg.decode().catch(() => {});
+        }
+
+        // Precargar en segundo plano la imagen 3D del Hero para que esté lista al terminar el Splash
+        const heroImg = new Image();
+        heroImg.src = '/hero-devices.png';
+
+        if (document.fonts && document.fonts.ready) {
+          await document.fonts.ready;
+        }
+      } catch {
+        // Si algún asset falla, continuamos sin bloquear la app
+      }
+
+      // Doble requestAnimationFrame asegura que el navegador ya pintó el fondo antes de animar
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (isMounted) setIsReady(true);
+        });
+      });
+    };
+
+    preloadAssets();
+    return () => { isMounted = false; };
   }, []);
 
-  // 2. El Splash Screen dura 4.5 segundos, contados desde que la página está lista
+  // 2. El Splash Screen dura 4.5 segundos contados desde que los assets están listos
   useEffect(() => {
     if (!isReady) return;
     const splashTimer = setTimeout(() => setShowSplash(false), 4500);
     return () => clearTimeout(splashTimer);
   }, [isReady]);
 
-  // Mientras respira esos 150ms, mostramos solo el fondo oscuro liso (cero lag)
-  if (!isReady) return <div className="min-h-screen bg-brand-bg"></div>;
+  // Mientras decodifica la imagen en memoria (milisegundos), fondo oscuro puro sin tirones
+  if (!isReady) return <div className="min-h-screen bg-brand-bg" />;
 
   return (
-    <>
-      {/* AnimatePresence gestiona la salida animada del Splash Screen */}
-      <AnimatePresence>
-        {showSplash && <SplashScreen />}
-      </AnimatePresence>
-
-      {/* Contenido Principal (solo se ve cuando el Splash se va) */}
-      {!showSplash && (
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ duration: 1, delay: 0.2 }}
-          className="min-h-screen bg-brand-bg font-sans relative overflow-hidden"
-        >
-          {/* Fondo de resplandores sutiles */}
-          <div 
-            className="absolute inset-0 z-0 opacity-40 pointer-events-none"
-            style={{
-              backgroundImage: `
-                radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 20% 80%, rgba(36, 16, 47, 0.4) 0%, transparent 40%)
-              `
-            }}
-          />
-
-          {/* Rayos de luz de fondo (esquinas inferiores) */}
-          <LightRays colorClass="text-brand-primary" className="opacity-50" />
-          <LightRays mirrored colorClass="text-brand-blue" className="opacity-50" />
-
-          {/* NAVBAR */}
-          <nav className="relative z-20 pt-8 pb-4">
-            <div className="container mx-auto px-8 lg:px-16 flex items-center justify-between">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                <img src="/logo.png" alt="Dirgndive Logo" className="w-8 h-8 object-contain" />
-                <span className="text-lg font-bold tracking-[0.2em] text-white">DIRGNDIVE</span>
-              </motion.div>
-
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.1 }}
-                className="flex items-center gap-10 text-[0.7rem] font-semibold text-brand-light/80 uppercase tracking-widest"
-              >
-                <div className="hidden md:flex gap-10">
-                  <a href="#inicio" className="hover:text-white transition-colors">Inicio</a>
-                  <a href="#servicios" className="hover:text-white transition-colors">Servicios</a>
-                  <a href="#nosotros" className="hover:text-white transition-colors">Nosotros</a>
-                  <a href="#contacto" className="hover:text-white transition-colors">Contacto</a>
-                </div>
-                <button className="text-brand-light hover:text-white transition-colors">
-                  <Menu size={24} strokeWidth={2} />
-                </button>
-              </motion.div>
-            </div>
-          </nav>
-
-          {/* HERO SECTION */}
-          <main className="container mx-auto px-8 lg:px-16 pt-10 lg:pt-12 pb-24 flex flex-col lg:flex-row items-center justify-between relative z-10 lg:min-h-[80vh]">
-            <motion.div 
-              className="lg:w-[50%] z-10"
-              initial="hidden" animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.5 } }
+    <div className="min-h-screen bg-brand-bg font-sans relative overflow-hidden">
+      {/* AnimatePresence con mode="wait" evita que el Splash y el Hero peleen por la GPU al mismo tiempo */}
+      <AnimatePresence mode="wait">
+        {showSplash ? (
+          <SplashScreen key="splash" />
+        ) : (
+          <motion.div 
+            key="hero"
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            transition={{ duration: 0.9, ease: "easeOut" }}
+            className="min-h-screen bg-brand-bg font-sans relative overflow-hidden will-change-[opacity]"
+          >
+            {/* Fondo de resplandores sutiles */}
+            <div 
+              className="absolute inset-0 z-0 opacity-40 pointer-events-none"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 20% 80%, rgba(36, 16, 47, 0.4) 0%, transparent 40%)
+                `
               }}
-            >
-              <motion.h1 variants={fadeUp} className="text-4xl sm:text-5xl lg:text-[3.6rem] font-semibold leading-[1.2] tracking-tight mb-10 text-white">
-                Soluciones <br /> tecnológicas que <br /> impulsan <span className="text-brand-primary">tu mundo.</span>
-              </motion.h1>
-              
-              <motion.div variants={fadeUp}>
-                <button className="px-10 py-3.5 rounded-full border border-brand-primary text-brand-primary text-sm font-semibold tracking-wide bg-brand-bg/50 hover:bg-brand-primary hover:text-white transition-all duration-300 backdrop-blur-sm shadow-[0_0_15px_rgba(139,92,246,0.15)] hover:shadow-[0_0_25px_rgba(139,92,246,0.4)]">
-                  Conoce más
-                </button>
-              </motion.div>
-            </motion.div>
+            />
 
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, x: 30 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              transition={{ duration: 1.2, delay: 0.8, ease: "easeOut" }}
-              className="lg:w-[50%] mt-16 lg:mt-0 relative flex justify-center lg:justify-end items-center"
-            >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-brand-primary/20 blur-[120px] rounded-full -z-10" />
-              <motion.img 
-                src="/hero-devices.png" 
-                alt="Dispositivos Dirgndive" 
-                className="w-full max-w-[560px] lg:max-w-[720px] object-contain relative z-10"
-                animate={{ y: [-6, 6, -6] }}
-                transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "https://placehold.co/800x600/11051F/8B5CF6?text=Imagen+hero-devices.png";
+            {/* Rayos de luz de fondo (esquinas inferiores) */}
+            <LightRays colorClass="text-brand-primary" className="opacity-50" />
+            <LightRays mirrored colorClass="text-brand-blue" className="opacity-50" />
+
+            {/* NAVBAR */}
+            <nav className="relative z-20 pt-8 pb-4">
+              <div className="container mx-auto px-8 lg:px-16 flex items-center justify-between">
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }} 
+                  animate={{ opacity: 1, x: 0 }} 
+                  transition={{ duration: 0.8 }}
+                  className="flex items-center gap-3 cursor-pointer will-change-transform"
+                >
+                  <img src="/logo.png" alt="Dirgndive Logo" className="w-8 h-8 object-contain" />
+                  <span className="text-lg font-bold tracking-[0.2em] text-white">DIRGNDIVE</span>
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }} 
+                  animate={{ opacity: 1, x: 0 }} 
+                  transition={{ duration: 0.8, delay: 0.1 }}
+                  className="flex items-center gap-10 text-[0.7rem] font-semibold text-brand-light/80 uppercase tracking-widest will-change-transform"
+                >
+                  <div className="hidden md:flex gap-10">
+                    <a href="#inicio" className="hover:text-white transition-colors">Inicio</a>
+                    <a href="#servicios" className="hover:text-white transition-colors">Servicios</a>
+                    <a href="#nosotros" className="hover:text-white transition-colors">Nosotros</a>
+                    <a href="#contacto" className="hover:text-white transition-colors">Contacto</a>
+                  </div>
+                  <button className="text-brand-light hover:text-white transition-colors">
+                    <Menu size={24} strokeWidth={2} />
+                  </button>
+                </motion.div>
+              </div>
+            </nav>
+
+            {/* HERO SECTION */}
+            <main className="container mx-auto px-8 lg:px-16 pt-10 lg:pt-12 pb-24 flex flex-col lg:flex-row items-center justify-between relative z-10 lg:min-h-[80vh]">
+              <motion.div 
+                className="lg:w-[50%] z-10"
+                initial="hidden" 
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.2 } }
                 }}
-              />
-            </motion.div>
-          </main>
-        </motion.div>
-      )}
-    </>
+              >
+                <motion.h1 variants={fadeUp} className="text-4xl sm:text-5xl lg:text-[3.6rem] font-semibold leading-[1.2] tracking-tight mb-10 text-white will-change-transform">
+                  Soluciones <br /> tecnológicas que <br /> impulsan <span className="text-brand-primary">tu mundo.</span>
+                </motion.h1>
+                
+                <motion.div variants={fadeUp} className="will-change-transform">
+                  <button className="px-10 py-3.5 rounded-full border border-brand-primary text-brand-primary text-sm font-semibold tracking-wide bg-brand-bg/50 hover:bg-brand-primary hover:text-white transition-all duration-300 backdrop-blur-sm shadow-[0_0_15px_rgba(139,92,246,0.15)] hover:shadow-[0_0_25px_rgba(139,92,246,0.4)]">
+                    Conoce más
+                  </button>
+                </motion.div>
+              </motion.div>
+
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, x: 30 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                transition={{ duration: 1.1, delay: 0.4, ease: "easeOut" }}
+                className="lg:w-[50%] mt-16 lg:mt-0 relative flex justify-center lg:justify-end items-center will-change-transform"
+              >
+                {/* Resplandor detrás de dispositivos optimizado con radial-gradient */}
+                <div 
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] rounded-full pointer-events-none -z-10"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.22) 0%, transparent 65%)'
+                  }}
+                />
+                <motion.img 
+                  src="/hero-devices.png" 
+                  alt="Dispositivos Dirgndive" 
+                  className="w-full max-w-[560px] lg:max-w-[720px] object-contain relative z-10 will-change-transform"
+                  animate={{ y: [0, -6, 0, 6, 0] }}
+                  transition={{ repeat: Infinity, duration: 6, delay: 1.1, ease: "easeInOut" }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://placehold.co/800x600/11051F/8B5CF6?text=Imagen+hero-devices.png";
+                  }}
+                />
+              </motion.div>
+            </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
